@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { decode } from "jsonwebtoken";
 import { Knex } from "knex";
 
-import { TableName } from "@app/db/schemas";
+import { AccessScope, OrgMembershipRole, OrgMembershipStatus, TableName } from "@app/db/schemas";
 import { seedData1 } from "@app/db/seed-data";
 import { AuthMethod, AuthTokenType, ProviderAuthResult } from "@app/services/auth/auth-type";
 import { UserAliasType } from "@app/services/user-alias/user-alias-types";
@@ -51,9 +51,18 @@ const completeAccount = (signupToken: string, code: string) =>
 
 const findUser = (id: string) => getDb()(TableName.Users).where({ id }).first();
 const findAlias = (userId: string) => getDb()(TableName.UserAliases).where({ userId }).first();
+const findOrgMembership = (userId: string, orgId: string) =>
+  getDb()(TableName.Membership)
+    .where({
+      actorUserId: userId,
+      scopeOrgId: orgId,
+      scope: AccessScope.Organization
+    })
+    .first();
 
 describe("Auth OAuth Signup V3 (provider-attested email verification)", () => {
   const createdUserIds: string[] = [];
+  let resetDefaultAuthOrg = false;
 
   afterAll(async () => {
     const db = getDb();
@@ -66,6 +75,13 @@ describe("Auth OAuth Signup V3 (provider-attested email verification)", () => {
 
   beforeEach(() => {
     smtp().clear();
+  });
+
+  afterEach(async () => {
+    if (resetDefaultAuthOrg) {
+      await getServices().superAdmin.updateServerCfg({ defaultAuthOrgId: null }, seedData1.id);
+      resetDefaultAuthOrg = false;
+    }
   });
 
   describe("provider did NOT verify the email -> our verification is still required", () => {
@@ -279,6 +295,29 @@ describe("Auth OAuth Signup V3 (provider-attested email verification)", () => {
 
       const alias = await findAlias(result.user.id);
       expect(alias?.isEmailVerified).toBe(true);
+    });
+
+    test("Google signup joins the self-hosted default organization when configured", async () => {
+      await getServices().superAdmin.updateServerCfg({ defaultAuthOrgId: seedData1.organization.id }, seedData1.id);
+      resetDefaultAuthOrg = true;
+
+      const email = `oauth-default-org-${crypto.randomUUID()}@localhost.local`;
+
+      const result = await oauthLogin({ email, isEmailVerifiedByProvider: true });
+      createdUserIds.push(result.user.id);
+
+      expect(result.result).toBe(ProviderAuthResult.SESSION);
+      expect(result.orgId).toBe(seedData1.organization.id);
+
+      const membership = await findOrgMembership(result.user.id, seedData1.organization.id);
+      expect(membership?.status).toBe(OrgMembershipStatus.Accepted);
+      expect(membership?.isActive).toBe(true);
+
+      const [membershipRole] = await getDb()(TableName.MembershipRole).where({ membershipId: membership?.id });
+      expect(membershipRole?.role).toBe(OrgMembershipRole.Member);
+
+      const alias = await findAlias(result.user.id);
+      expect(alias?.orgId).toBe(seedData1.organization.id);
     });
 
     test("repeat verified login returns a session without a duplicate signup signal", async () => {

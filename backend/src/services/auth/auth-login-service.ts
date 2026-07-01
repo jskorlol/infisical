@@ -961,7 +961,11 @@ export const authLoginServiceFactory = ({
           tx
         );
 
-        if (authMethod === AuthMethod.GITHUB && serverCfg.defaultAuthOrgId && !appCfg.isCloud) {
+        if (
+          (authMethod === AuthMethod.GITHUB || authMethod === AuthMethod.GOOGLE) &&
+          serverCfg.defaultAuthOrgId &&
+          !appCfg.isCloud
+        ) {
           const defaultOrg = await requestMemoize(requestMemoKeys.orgFindOrgById(serverCfg.defaultAuthOrgId), () =>
             orgDAL.findOrgById(serverCfg.defaultAuthOrgId as string)
           );
