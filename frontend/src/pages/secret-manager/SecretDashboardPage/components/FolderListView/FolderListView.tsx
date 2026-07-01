@@ -23,7 +23,7 @@ import {
   DialogTitle
 } from "@app/components/v3";
 import { ROUTE_PATHS } from "@app/const/routes";
-import { ProjectPermissionActions, ProjectPermissionSub, useSubscription } from "@app/context";
+import { ProjectPermissionActions, ProjectPermissionSub } from "@app/context";
 import { usePopUp } from "@app/hooks";
 import { useDeleteFolder, useUpdateFolder } from "@app/hooks/api";
 import { PendingAction, TSecretFolder } from "@app/hooks/api/secretFolders/types";
@@ -63,8 +63,6 @@ export const FolderListView = ({
     from: ROUTE_PATHS.SecretManager.SecretDashboardPage.id,
     select: (el) => el.secretPath
   });
-  const { subscription } = useSubscription();
-
   const { mutateAsync: updateFolder } = useUpdateFolder();
   const { mutateAsync: deleteFolder } = useDeleteFolder();
   const { isBatchMode } = useBatchMode();
@@ -317,11 +315,7 @@ export const FolderListView = ({
         isOpen={popUp.deleteFolder.isOpen}
         deleteKey={(popUp.deleteFolder?.data as TSecretFolder)?.name}
         title="Do you want to delete this folder?"
-        subTitle={`This folder and all its contents will be removed. ${
-          subscription?.pitRecovery
-            ? "You can reverse this action by rolling back to a previous commit."
-            : "Rolling back to a previous commit isn't available on your current plan. Upgrade to enable this feature."
-        }`}
+        subTitle="This folder and all its contents will be removed. You can reverse this action by rolling back to a previous commit."
         onChange={(isOpen) => handlePopUpToggle("deleteFolder", isOpen)}
         onDeleteApproved={handleFolderDelete}
       />

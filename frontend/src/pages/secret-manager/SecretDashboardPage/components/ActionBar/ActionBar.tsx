@@ -913,16 +913,7 @@ export const ActionBar = ({
             {(isAllowed) => (
               <Button
                 variant="outline_bg"
-                onClick={() => {
-                  if (subscription && subscription.pitRecovery) {
-                    onClickRollbackMode();
-                    return;
-                  }
-
-                  handlePopUpOpen("upgradePlan", {
-                    featureName: "PIT Recovery"
-                  });
-                }}
+                onClick={onClickRollbackMode}
                 leftIcon={<FontAwesomeIcon icon={faCodeCommit} />}
                 isLoading={isSnapshotCountLoading}
                 className="h-10"

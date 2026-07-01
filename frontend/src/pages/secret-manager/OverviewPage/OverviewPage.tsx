@@ -604,10 +604,9 @@ const OverviewPageContent = () => {
   const hasVaultConnection = vaultAppConnections.length > 0;
   const hasDopplerConnection = dopplerAppConnections.length > 0;
 
-  const singleEnvChangesCount = subscription.pitRecovery ? singleEnvCommitCount : 0;
-  const isSingleEnvChangesCountLoading = subscription.pitRecovery
-    ? isSingleEnvCommitCountPending && isSingleEnvCommitCountFetching
-    : false;
+  const singleEnvChangesCount = singleEnvCommitCount;
+  const isSingleEnvChangesCountLoading =
+    isSingleEnvCommitCountPending && isSingleEnvCommitCountFetching;
 
   const { secretImports, isImportedSecretPresentInEnv, getImportedSecretByKey } =
     useGetImportedSecretsAllEnvs({
@@ -905,13 +904,6 @@ const OverviewPageContent = () => {
   }, [routerSearch.dynamicSecretId, dynamicSecrets?.map((ds) => ds.id).join(",")]);
 
   const handleViewCommitHistory = async (envSlug: string, preloadedFolderId?: string) => {
-    if (!subscription?.pitRecovery) {
-      handlePopUpOpen("upgradePlan", {
-        text: "You can use point-in-time recovery if you upgrade your Infisical plan."
-      });
-      return;
-    }
-
     if (!canReadCommits) return;
 
     let targetFolderId = preloadedFolderId;
@@ -2823,12 +2815,9 @@ const OverviewPageContent = () => {
                         }}
                       >
                         <GitCommitIcon />
-                        {/* eslint-disable-next-line no-nested-ternary */}
-                        {subscription.pitRecovery
-                          ? isSingleEnvChangesCountLoading
-                            ? "Loading..."
-                            : `${singleEnvChangesCount} Commit${singleEnvChangesCount === 1 ? "" : "s"}`
-                          : "Commit History"}
+                        {isSingleEnvChangesCountLoading
+                          ? "Loading..."
+                          : `${singleEnvChangesCount} Commit${singleEnvChangesCount === 1 ? "" : "s"}`}
                       </button>
                     </Badge>
                     <Tooltip>
@@ -3069,12 +3058,9 @@ const OverviewPageContent = () => {
                                     }}
                                   >
                                     <GitCommitIcon />
-                                    {/* eslint-disable-next-line no-nested-ternary */}
-                                    {subscription.pitRecovery
-                                      ? isSingleEnvChangesCountLoading
-                                        ? "Loading..."
-                                        : `${singleEnvChangesCount} Commit${singleEnvChangesCount === 1 ? "" : "s"}`
-                                      : "Commit History"}
+                                    {isSingleEnvChangesCountLoading
+                                      ? "Loading..."
+                                      : `${singleEnvChangesCount} Commit${singleEnvChangesCount === 1 ? "" : "s"}`}
                                   </button>
                                 </Badge>
                                 <Tooltip>
@@ -3795,9 +3781,8 @@ const OverviewPageContent = () => {
             </AlertDialogMedia>
             <AlertDialogTitle>Delete Folder</AlertDialogTitle>
             <AlertDialogDescription>
-              {subscription?.pitRecovery
-                ? "This folder and all its contents will be removed. You can reverse this action by rolling back to a previous commit."
-                : "This folder and all its contents will be removed. Rolling back to a previous commit isn't available on your current plan. Upgrade to enable this feature."}
+              This folder and all its contents will be removed. You can reverse this action by
+              rolling back to a previous commit.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

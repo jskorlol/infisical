@@ -9,8 +9,7 @@ import {
   ProjectPermissionActions,
   ProjectPermissionSub,
   useProject,
-  useProjectPermission,
-  useSubscription
+  useProjectPermission
 } from "@app/context";
 import { ProjectPermissionSecretActions } from "@app/context/ProjectPermissionContext/types";
 import { usePopUp } from "@app/hooks";
@@ -66,7 +65,6 @@ export const SelectionPanel = ({
   visibleEnvs
 }: Props) => {
   const { permission } = useProjectPermission();
-  const { subscription } = useSubscription();
 
   const { handlePopUpOpen, handlePopUpToggle, handlePopUpClose, popUp } = usePopUp([
     "bulkDeleteEntries",
@@ -141,10 +139,7 @@ export const SelectionPanel = ({
 
   const getDeleteModalSubTitle = () => {
     if (selectedFolderCount > 0) {
-      if (subscription?.pitRecovery) {
-        return "All selected folders and their contents will be removed. You can reverse this action by rolling back to a previous commit.";
-      }
-      return "All selected folders and their contents will be removed. Rolling back to a previous commit isn't available on your current plan. Upgrade to enable this feature.";
+      return "All selected folders and their contents will be removed. You can reverse this action by rolling back to a previous commit.";
     }
     return undefined;
   };
